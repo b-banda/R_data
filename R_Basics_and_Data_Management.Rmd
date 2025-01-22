@@ -1,0 +1,167 @@
+---
+title: "R Basics and Data Management"
+author: "Your Name"
+date: "2025-01-21"
+output: html_document
+---
+
+## Introduction
+
+This R Markdown document demonstrates best practices, basic concepts, and data management techniques in R using a school enrollment dataset.
+
+------------------------------------------------------------------------
+
+## 1. Setting Up the Environment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(123)  # For reproducibility
+```
+
+------------------------------------------------------------------------
+
+```{r}
+
+```
+
+```{r}
+write.csv(student_data="student_dummy.csv")
+```
+
+## 2. Creating the Dataset
+
+```{r create-dataset}
+# Generate the dataset
+n <- 290  # Number of observations
+library(dplyr)
+
+student_data <- data.frame(
+  Student_ID = sprintf("S%03d", 1:n),
+  Name = paste0("Student_", 1:n),
+  Age = sample(13:17, n, replace = TRUE),
+  Gender = sample(c(1, 2), n, replace = TRUE),
+  Grade_Level = sample(8:12, n, replace = TRUE),
+  Enrollment_Type = sample(c("Full-time", "Part-time"), n, replace = TRUE, prob = c(0.7, 0.3)),
+  Subjects_Enrolled = sample(3:7, n, replace = TRUE),
+  Attendance_Rate = round(runif(n, 70, 100), 1),
+  Average_Score = round(rnorm(n, mean = 80, sd = 10), 1)
+)
+
+# Introduce some missing values
+missing_indices <- sample(1:n, size = 20)
+student_data$Attendance_Rate[missing_indices] <- NA
+
+```
+
+------------------------------------------------------------------------
+
+## 3. Renaming Columns
+
+```{r renaming-columns}
+# Renaming columns
+student_data <- student_data %>%
+  rename(
+    ID = Student_ID,
+    Score = Average_Score
+  )
+head(student_data)
+```
+
+------------------------------------------------------------------------
+
+## 4. Recoding Values
+
+```{r recoding-values}
+# Recode Gender and Grade_Level
+student_data <- student_data %>%
+  mutate(
+    Gender = recode(Gender, "Male" = 1, "Female" = 2),
+    Grade_Label = recode(Grade_Level,
+                         `8` = "Middle School",
+                         `9` = "Freshman",
+                         `10` = "Sophomore",
+                         `11` = "Junior",
+                         `12` = "Senior")
+  )
+head(student_data)
+```
+
+------------------------------------------------------------------------
+
+## 5. Handling Missing Data
+
+### Dropping Missing Values
+
+```{r drop-na}
+# Dropping rows with missing values
+cleaned_data <- student_data %>% drop_na()
+dim(cleaned_data)
+```
+
+### Replacing Missing Values
+
+```{r replace-na}
+# Replace missing Attendance_Rate with mean
+student_data <- student_data %>%
+  mutate(Attendance_Rate = ifelse(is.na(Attendance_Rate), mean(Attendance_Rate, na.rm = TRUE), Attendance_Rate))
+head(student_data)
+```
+
+------------------------------------------------------------------------
+
+## 6. Filtering and Summarizing Data
+
+### Filtering Data
+
+```{r filtering}
+# Filter Full-time students
+full_time_students <- student_data %>%
+  filter(Enrollment_Type == "Full-time")
+head(full_time_students)
+```
+
+### Summarizing Data
+
+```{r summarizing}
+# Summary statistics
+summary_stats <- student_data %>%
+  group_by(Grade_Level, Gender) %>%
+  summarize(
+    Mean_Score = mean(Score, na.rm = TRUE),
+    Median_Attendance = median(Attendance_Rate, na.rm = TRUE),
+    Total_Students = n()
+  )
+summary_stats
+```
+
+------------------------------------------------------------------------
+
+## 7. Data Visualization
+
+```{r visualization}
+library(ggplot2)
+# Boxplot of Scores by Grade Level
+ggplot(student_data, aes(x = factor(Grade_Level), y = Score, fill = as.factor(Gender))) +
+  geom_boxplot() +
+  labs(
+    title = "Average Scores by Grade Level and Gender",
+    x = "Grade Level",
+    y = "Average Score"
+  ) +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+## 8. Exporting Cleaned Data
+
+```{r export-data}
+# Export the cleaned data to a CSV
+write.csv(student_data, "cleaned_student_data.csv", row.names = FALSE)
+```
+
+------------------------------------------------------------------------
+
+## Conclusion
+
+This document covered R basics, data cleaning, and data management techniques. The steps included renaming columns, handling missing values, recoding variables, and visualizing data. The cleaned dataset has been saved for further analysis.
